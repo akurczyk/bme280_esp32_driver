@@ -5,7 +5,7 @@
 typedef struct {
     gpio_num_t sda_pin;
     gpio_num_t scl_pin;
-    i2c_port_t i2c_instance; // I2C_NUM_1
+    i2c_port_t i2c_instance;
     uint16_t T1;
     int16_t T2;
     int16_t T3;
@@ -30,6 +30,13 @@ typedef struct {
     int32_t t_fine;
 } bme280_config_t;
 
+typedef struct {
+    double temperature;
+    double pressure;
+    double humidity;
+    double altitude;
+} bme280_measurement_t;
+
 uint8_t bme280_setup(bme280_config_t* inst);
 uint8_t bme280_read_data(bme280_config_t* inst, uint8_t reg);
 void bme280_write_data(bme280_config_t* inst, uint8_t reg, uint8_t value);
@@ -40,3 +47,8 @@ double bme280_get_temperature(bme280_config_t* inst);
 double bme280_get_pressure(bme280_config_t* inst);
 double bme280_get_humidity(bme280_config_t* inst);
 double bme280_get_altitude(double p, double p0);
+void bme280_make_measurement(bme280_config_t* inst, bme280_measurement_t* reading);
+void bme280_print_measurement(bme280_measurement_t* reading);
+void bme280_clear_measurement(bme280_measurement_t* m);
+void bme280_add_measurements(bme280_measurement_t* m1, bme280_measurement_t* m2);
+void bme280_div_measurement(bme280_measurement_t* m, int d);

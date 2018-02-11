@@ -40,12 +40,14 @@ uint8_t bme280_setup(bme280_config_t* inst)
 
     bme280_write_data(inst, 0xE0, 0xB6);
 
-    vTaskDelay(300);
+    vTaskDelay(300 / portTICK_PERIOD_MS);
     while ((bme280_read_data(inst, 0xF3) & 0x01) != 0)
-        vTaskDelay(100);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
 
     bme280_read_compensation_data(inst);
     bme280_set_sampling(inst);
+
+    vTaskDelay(200 / portTICK_PERIOD_MS);
 
     return 1;
 }
@@ -194,4 +196,58 @@ double bme280_get_humidity(bme280_config_t* inst)
 double bme280_get_altitude(double p, double p0)
 {
     return 44330 * (1 - pow((p / p0), (1 / 5.255)));
+}
+
+void bme280_make_measurement(bme280_config_t* inst, bme280_measurement_t* reading)
+{
+    bme280_clear_measurement(reading);
+
+    int measurements_number = 0;
+    while (measurements_number < 10)
+    {
+        bme280_measurement_t current_reading;
+        bme280_read_temp_press_and_hum(inst);
+        current_reading.temperature = bme280_get_temperature(inst);
+        current_reading.pressure = bme280_get_pressure(inst);
+        current_reading.humidity = bme280_get_humidity(inst);
+        current_reading.altitude = bme280_get_altitude(current_reading.pressure, 1013.0);
+
+        bme280_add_measurements(reading, &current_reading);
+        measurements_number++;
+    }
+
+    bme280_div_measurement(reading, 10.0);
+}
+
+void bme280_print_measurement(bme280_measurement_t* reading)
+{
+        printf("Temperature: %.1f *C\r\n",  reading->temperature);
+        printf("Pressure:    %.0f hPa\r\n", reading->pressure);
+        printf("Humidity:    %.0f %%\r\n",  reading->humidity * 100.0);
+        printf("Altitude:    %.0f m\r\n",   reading->altitude);
+        printf("\r\n");
+}
+
+void bme280_clear_measurement(bme280_measurement_t* m)
+{
+    m->temperature = 0.0;
+    m->pressure    = 0.0;
+    m->humidity    = 0.0;
+    m->altitude    = 0.0;
+}
+
+void bme280_add_measurements(bme280_measurement_t* m1, bme280_measurement_t* m2)
+{
+    m1->temperature += m2->temperature;
+    m1->pressure    += m2->pressure;
+    m1->humidity    += m2->humidity;
+    m1->altitude    += m2->altitude;
+}
+
+void bme280_div_measurement(bme280_measurement_t* m, int d)
+{
+    m->temperature /= d;
+    m->pressure    /= d;
+    m->humidity    /= d;
+    m->altitude    /= d;
 }
