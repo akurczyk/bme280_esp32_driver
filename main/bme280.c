@@ -31,6 +31,7 @@ uint8_t bme280_setup(bme280_config_t* inst)
     conf.scl_io_num = inst->scl_pin;
     conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
     conf.master.clk_speed = 100000;
+    conf.clk_flags = 0;
     i2c_param_config(inst->i2c_instance, &conf);
     i2c_driver_install(inst->i2c_instance, conf.mode, 0, 0, 0);
 
